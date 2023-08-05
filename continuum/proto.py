@@ -43,7 +43,7 @@ class ProtoMixin(object):
         """
         handler = getattr(self, 'handle_msg_' + packet['kind'], None)
         if handler is None:
-            print("Received packet of unknown kind '{}'".format(packet['kind']))
+            print(f"Received packet of unknown kind '{packet['kind']}'")
             return
 
         print("[continuum] {} RECVED: {!r}".format(self.__class__.__name__, packet))
@@ -54,7 +54,7 @@ class ProtoMixin(object):
         try:
             handler(**packet)
         except TypeError as exc:
-            print("Received invalid arguments for packet: " + str(exc))
+            print(f"Received invalid arguments for packet: {str(exc)}")
             return
 
     def handle_read(self):
