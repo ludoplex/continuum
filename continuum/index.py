@@ -174,9 +174,10 @@ class Index(object):
         # If requested, remove locally deleted types from index.
         if purge_locally_deleted:
             cursor.execute("SELECT id, name FROM types")
-            deleted_types = [x['id'] for x in cursor.fetchall() if x['name'] not in local_types]
-            if deleted_types:
-                print("[continuum] Deleting {} types".format(len(deleted_types)))
+            if deleted_types := [
+                x['id'] for x in cursor.fetchall() if x['name'] not in local_types
+            ]:
+                print(f"[continuum] Deleting {len(deleted_types)} types")
                 query_fmt = "DELETE FROM types WHERE id IN ({})"
                 cursor.execute(query_fmt.format(','.join('?' * len(deleted_types))), deleted_types)
 

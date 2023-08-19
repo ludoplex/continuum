@@ -53,11 +53,8 @@ class ClientConnection(ProtoMixin, asyncore.dispatcher_with_send):
         asyncore.dispatcher_with_send.handle_close(self)
 
     def send_or_delay_packet(self, receiver_idb_path, packet):
-        # Is a client for this IDB alive? Just send message.
-        client = self.server.idb_client_map.get(receiver_idb_path)
-        if client:
+        if client := self.server.idb_client_map.get(receiver_idb_path):
             client.send_packet(packet)
-        # Nope, put message into backlog and launch a fresh idaq.
         else:
             self.server.queue_delayed_packet(receiver_idb_path, packet)
             from . import launch_ida_gui_instance
@@ -80,7 +77,7 @@ class ClientConnection(ProtoMixin, asyncore.dispatcher_with_send):
     def handle_msg_focus_symbol(self, symbol, **_):
         export = self.project.index.find_export(symbol)
         if export is None:
-            print("[continuum] Symbol '{}' not found.".format(symbol))
+            print(f"[continuum] Symbol '{symbol}' not found.")
             return
 
         self.send_or_delay_packet(export['idb_path'], {
@@ -115,7 +112,7 @@ class Server(asyncore.dispatcher):
 
         self.core = core
         self.clients = set()
-        self.idb_client_map = dict()
+        self.idb_client_map = {}
         self._delayed_packets = defaultdict(list)
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -152,9 +149,9 @@ class Server(asyncore.dispatcher):
         As sockets tend to take several seconds before they fully close and free the used
         port again, we select a fresh one before getting to work.
         """
-        # Any other client online? Migrate host.
-        host_candidates = [x for x in self.clients if x.idb_path != self.core.client.idb_path]
-        if host_candidates:
+        if host_candidates := [
+            x for x in self.clients if x.idb_path != self.core.client.idb_path
+        ]:
             self.core.read_or_generate_server_port(force_fresh=True)
             elected_client = next(iter(host_candidates))
             elected_client.send_packet({'kind': 'become_host'})

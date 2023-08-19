@@ -138,9 +138,7 @@ class Continuum(QObject):
 
     def handle_open_idb(self, _, is_old_database):
         """Performs start-up tasks when a new IDB is loaded."""
-        # Is IDB part of a continuum project? Open it.
-        proj_dir = Project.find_project_dir(GetIdbDir())
-        if proj_dir:
+        if proj_dir := Project.find_project_dir(GetIdbDir()):
             project = Project()
             project.open(proj_dir)
             self.open_project(project)

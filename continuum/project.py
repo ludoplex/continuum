@@ -85,27 +85,24 @@ class Project(QObject):
     def _analyze_project_files(self):
         """Launches background analysis instances for binaries that aren't indexed yet."""
         plugin_root = os.path.dirname(os.path.realpath(__file__))
-        procs = []
-
-        for cur_file in self.files:
-            # IDB already indexed? Skip.
-            if self.index.is_idb_indexed(self.file_to_idb(cur_file)):
-                continue
-
-            procs.append(subprocess.Popen([
-                sys.executable,
-                '-A', 
-                '-S"{}"'.format(os.path.join(plugin_root, 'analyze.py')), 
-                '-L{}.log'.format(cur_file), 
-                cur_file,
-            ]))
-
-        return procs
+        return [
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    '-A',
+                    f"""-S"{os.path.join(plugin_root, 'analyze.py')}\"""",
+                    f'-L{cur_file}.log',
+                    cur_file,
+                ]
+            )
+            for cur_file in self.files
+            if not self.index.is_idb_indexed(self.file_to_idb(cur_file))
+        ]
 
     @staticmethod
     def file_to_idb(file):
         """Obtains the IDB path for a binary."""
-        return os.path.splitext(file)[0] + '.idb'
+        return f'{os.path.splitext(file)[0]}.idb'
 
     @classmethod
     def find_project_dir(cls, start_path):
